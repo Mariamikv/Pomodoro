@@ -1,86 +1,148 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
+import Navbar  from '../components/Navbar';
+import Timer from '../components/Timer';
+import About from '../components/About';
+import ModelSettings from '../components/ModelSettings'
+import React, { useEffect, useState, useRef } from 'react';
+import internal from 'stream';
+import Alarm from '../components/Alarm';
 
-const Home: NextPage = () => {
+//import all components with layout which we didi in ecommerce app
+
+export default function index() {
+
+  const [pomodoro, setPomodoro] = useState(25);
+  const [shortBreak, setShortBreak] = useState(5);
+  const [longBreak, setLongBreak] = useState(10);
+  const [seconds, setSeconds] = useState(0);
+
+  const [stage, setStage] = useState(0);
+  const [ticking, setTicking] = useState(false);
+  const [consumedSeconds, setConsumedSeconds] = useState(0);
+  const [istimeUp, setIsTimeUp] = useState(false);
+  const [openSetting, setOpenSetting] = useState(false);
+
+  const alarmRef = useRef<any>(null);
+	const pomodoroRef = useRef<any>(null);
+	const shortBreakRef = useRef<any>(null);
+	const longBreakRef = useRef<any>(null);
+
+  const updateTimeDefaultValue = () => {
+		setPomodoro(pomodoroRef.current?.value);
+		setShortBreak(shortBreakRef.current?.value);
+		setLongBreak(longBreakRef.current?.value);
+		setOpenSetting(false);
+		setSeconds(0);
+		setConsumedSeconds(0);
+	};
+
+  const switchStage = (index: number) => {
+    const isYes = consumedSeconds && stage !== index
+     ? confirm("Are you sure you want to switch?")
+     : false;
+    if(isYes){
+      reset();
+      setStage(index);
+    } else if(!consumedSeconds){
+      setStage(index);
+    }
+  };
+
+  const getTickingTime = () => {
+		const timeStage = {
+			0: pomodoro,
+			1: shortBreak,
+			2: longBreak,
+		};
+		return timeStage[stage as keyof typeof timeStage];
+	};
+ 
+  const updateMinute = () => {
+    const updateStage = {
+			0: setPomodoro,
+			1: setShortBreak,
+			2: setLongBreak,
+		};
+    return updateStage[stage as keyof typeof updateStage];
+  }
+
+  const startTimer = () => {
+    setIsTimeUp(false);
+    muteAlarm();
+    setTicking((ticking) => !ticking);
+  };
+
+  const muteAlarm = () => {
+    alarmRef.current?.pause();
+    alarmRef.current.currentTime  = 0;
+  };
+
+  const reset = () => {
+		setConsumedSeconds(0);
+		setTicking(false);
+		setSeconds(0);
+		updateTimeDefaultValue();
+	};
+
+  const timeUp = () => {
+    reset();
+    setIsTimeUp(true);
+    alarmRef.current?.play();
+  };
+
+  const clockTicking = () => {
+    const minutes = getTickingTime();
+    const setMinute = updateMinute();
+
+    if(minutes === 0 && seconds === 0){
+      timeUp();
+    } else if(seconds === 0){
+      setMinute((minute) => minute-1);
+      setSeconds(59);
+    }else {
+      setSeconds((second) => second-1);
+    }
+  };
+
+  useEffect(() => {
+    window.onbeforeunload = () => {
+      return consumedSeconds ? "Show warning" : null;
+    }
+
+    const timer = setInterval(() => {
+        if(ticking){
+          setConsumedSeconds(value => value+1)
+          clockTicking();
+        }    
+      }, 1000);
+      return () => {
+        clearInterval(timer);
+      };
+  }, [seconds, pomodoro, shortBreak, longBreak, ticking]);
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center py-2">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="flex w-full flex-1 flex-col items-center justify-center px-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Welcome to{' '}
-          <a className="text-blue-600" href="https://nextjs.org">
-            Next.js!
-          </a>
-        </h1>
-
-        <p className="mt-3 text-2xl">
-          Get started by editing{' '}
-          <code className="rounded-md bg-gray-100 p-3 font-mono text-lg">
-            pages/index.tsx
-          </code>
-        </p>
-
-        <div className="mt-6 flex max-w-4xl flex-wrap items-center justify-around sm:w-full">
-          <a
-            href="https://nextjs.org/docs"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Documentation &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Find in-depth information about Next.js features and its API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Learn &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Learn about Next.js in an interactive course with quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Examples &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Discover and deploy boilerplate example Next.js projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Deploy &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+    <div className='bg-red-700 min-h-screen font-inter'>
+        <div className='max-w-2xl min-h-screen mx-auto'>
+          <Navbar setOpenSetting={setOpenSetting} />
+          <Timer stage={stage} 
+            switchStage={switchStage} 
+            getTickingTime={getTickingTime}
+            seconds={seconds}
+            ticking={ticking}
+            startTimer={startTimer}
+            muteAlarm={muteAlarm}
+            isTimeUp={istimeUp}
+            reset={reset}
+            />
+          <About/>
+          <Alarm ref={alarmRef}/>
+          <ModelSettings
+            openSetting={openSetting}
+            setOpenSetting={setOpenSetting}
+            pomodoroRef={pomodoroRef}
+            shortBreakRef={shortBreakRef}
+            longBreakRef={longBreakRef}
+            updateTimeDefaultValue={updateTimeDefaultValue} />
         </div>
-      </main>
-
-      <footer className="flex h-24 w-full items-center justify-center border-t">
-        <a
-          className="flex items-center justify-center gap-2"
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-        </a>
-      </footer>
     </div>
-  )
+  );
 }
-
-export default Home
