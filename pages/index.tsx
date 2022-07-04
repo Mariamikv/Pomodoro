@@ -1,6 +1,7 @@
 import Navbar  from '../components/Navbar';
 import Timer from '../components/Timer';
 import About from '../components/About';
+import Head from 'next/head'
 import ModelSettings from '../components/ModelSettings'
 import React, { useEffect, useState, useRef } from 'react';
 import internal from 'stream';
@@ -121,6 +122,9 @@ export default function index() {
 
   return (
     <div className='bg-red-700 min-h-screen font-inter'>
+      <Head>
+        <title>Pomodoro</title>
+      </Head>
         <div className='max-w-2xl min-h-screen mx-auto'>
           <Navbar setOpenSetting={setOpenSetting} />
           <Timer stage={stage} 
